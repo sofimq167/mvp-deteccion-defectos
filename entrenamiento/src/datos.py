@@ -77,3 +77,49 @@ class ConjuntoSegmentos(Dataset):
         espectro = senal.log_mel(x[: cfg.MUESTRAS_SEGMENTO])[0]
         y = self.indice_clase[r["clase_modelo"]]
         return torch.from_numpy(espectro), y
+
+
+class ConjuntoPrecalculado(Dataset):
+    """Lee los log-mel ya calculados por `src.precalcular`.
+
+    Es la via recomendada para entrenar: evita decodificar audio en cada
+    epoca y reduce el conjunto de 13 GB a 1,45 GB, lo que permite llevarlo
+    a un entorno de computo en la nube.
+    """
+
+    def __init__(self, raiz_rasgos: Path, particion: str,
+                 limite_por_clase: int | None = None, semilla: int = cfg.SEMILLA):
+        raiz = Path(raiz_rasgos)
+        ruta_x = raiz / ("rasgos_%s.npy" % particion)
+        ruta_y = raiz / ("etiquetas_%s.npy" % particion)
+        if not ruta_x.is_file():
+            raise FileNotFoundError(
+                "No se encontro %s. Ejecutar antes `python -m src.precalcular`." % ruta_x)
+
+        self.x = np.load(ruta_x, mmap_mode="r")      # no se carga entero en RAM
+        self.y = np.load(ruta_y)
+        self.idx = np.arange(len(self.y))
+
+        if limite_por_clase:
+            rng = np.random.default_rng(semilla)
+            elegidos = []
+            for c in range(cfg.N_CLASES):
+                de_la_clase = np.where(self.y == c)[0]
+                rng.shuffle(de_la_clase)
+                elegidos.append(de_la_clase[:limite_por_clase])
+            self.idx = np.sort(np.concatenate(elegidos))
+
+    def __len__(self) -> int:
+        return len(self.idx)
+
+    def etiquetas(self) -> np.ndarray:
+        return self.y[self.idx]
+
+    def pesos_por_clase(self) -> torch.Tensor:
+        cuenta = np.bincount(self.etiquetas(), minlength=cfg.N_CLASES).astype(float)
+        cuenta = np.maximum(cuenta, 1)
+        return torch.tensor(cuenta.sum() / (cfg.N_CLASES * cuenta), dtype=torch.float32)
+
+    def __getitem__(self, i: int):
+        j = self.idx[i]
+        return torch.from_numpy(np.asarray(self.x[j], dtype=np.float32)), int(self.y[j])

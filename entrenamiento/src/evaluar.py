@@ -26,7 +26,7 @@ from torch.utils.data import DataLoader
 
 from nucleo import config as cfg
 from nucleo.modelo import Cnn6
-from src.datos import ConjuntoSegmentos
+from src.datos import ConjuntoPrecalculado, ConjuntoSegmentos
 
 UMBRAL_RNF01_EB = 0.90
 UMBRAL_RNF01_EXH = 0.80
@@ -35,7 +35,9 @@ LINEA_BASE_DESCRIPTORES = 0.408     # medido en la verificacion del conjunto
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--datos", required=True, type=Path)
+    ap.add_argument("--datos", type=Path, default=None)
+    ap.add_argument("--rasgos", type=Path, default=None,
+                    help="carpeta con los log-mel precalculados (recomendado)")
     ap.add_argument("--modelo", required=True, type=Path)
     ap.add_argument("--manifiesto", default="manifiesto_v2.csv")
     ap.add_argument("--lote", type=int, default=64)
@@ -45,8 +47,14 @@ def main() -> None:
     args = ap.parse_args()
 
     dispositivo = "cuda" if torch.cuda.is_available() else "cpu"
-    prueba = ConjuntoSegmentos(args.datos, "prueba", args.manifiesto,
-                               args.limite_por_clase, cfg.SEMILLA)
+    if args.rasgos:
+        prueba = ConjuntoPrecalculado(args.rasgos, "prueba",
+                                      args.limite_por_clase, cfg.SEMILLA)
+    elif args.datos:
+        prueba = ConjuntoSegmentos(args.datos, "prueba", args.manifiesto,
+                                   args.limite_por_clase, cfg.SEMILLA)
+    else:
+        raise SystemExit("Hay que indicar --rasgos (recomendado) o --datos.")
     cargador = DataLoader(prueba, batch_size=args.lote, num_workers=args.hilos)
 
     punto = torch.load(args.modelo, map_location=dispositivo, weights_only=False)
