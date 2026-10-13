@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Artefactos y pesos: se reconstruyen con los guiones, pesan decenas de MB
+entrenamiento/modelos/*.pth
+entrenamiento/modelos/*.pt
+sistema/servicio/modelo/*.pt
+!sistema/servicio/modelo/.gitkeep
+
+# Informes y salidas de ejecución
+entrenamiento/informes/
+tmp_analisis/
+
+# Datos: viven fuera del repositorio
+datos/
+*.wav
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini

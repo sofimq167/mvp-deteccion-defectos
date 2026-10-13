@@ -1,0 +1,111 @@
+/* Diseño adaptable: utilizable desde 360 px de ancho (RNF-04).
+   Los defectos no se distinguen solo por color: cada uno lleva su nombre. */
+
+:root {
+  --tinta: #1b2733;
+  --suave: #5b6b7c;
+  --borde: #d7dee6;
+  --fondo: #f6f8fa;
+  --acento: #1168bd;
+  --sin-defecto: #c8d2dc;
+  --hum: #1168bd;
+  --hiss: #4c9f70;
+  --distorsion: #d98324;
+  --clic: #b5436e;
+  --alerta: #8a5a00;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--tinta);
+  background: var(--fondo);
+}
+
+header, main, footer { max-width: 60rem; margin: 0 auto; padding: 0 1rem; }
+header { padding-top: 2rem; }
+footer { padding-bottom: 2rem; margin-top: 2rem; }
+
+h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.15rem; margin: 0 0 .5rem; }
+h3 { font-size: 1rem; margin: 1.75rem 0 .5rem; }
+.sub { color: var(--suave); margin: .25rem 0; font-size: .92rem; }
+
+/* ---------------------------------------------------------- carga */
+.zona {
+  border: 2px dashed var(--borde);
+  border-radius: .75rem;
+  background: #fff;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  transition: border-color .15s, background .15s;
+}
+.zona.encima { border-color: var(--acento); background: #eef5fc; }
+.zona-titulo { font-size: 1.05rem; margin: 0 0 .5rem; }
+.zona-ayuda { color: var(--suave); margin: .25rem 0 .75rem; }
+.zona-nota { color: var(--suave); font-size: .85rem; margin-top: 1rem; }
+
+.boton {
+  display: inline-block;
+  background: var(--acento);
+  color: #fff;
+  border: 0;
+  border-radius: .4rem;
+  padding: .55rem 1.1rem;
+  font: inherit;
+  cursor: pointer;
+}
+.boton.secundario { background: #fff; color: var(--acento); border: 1px solid var(--acento); }
+.boton:focus-visible { outline: 3px solid #96c2ec; outline-offset: 2px; }
+
+.error {
+  background: #fdf2f2; border: 1px solid #f0c6c6; border-left: 4px solid #c0392b;
+  padding: .75rem 1rem; border-radius: .3rem; margin-top: 1rem;
+}
+
+/* ------------------------------------------------------- progreso */
+.barra { height: .6rem; background: var(--borde); border-radius: 1rem; overflow: hidden; margin: 1rem 0 .5rem; }
+.barra-avance { height: 100%; width: 0; background: var(--acento); transition: width .4s; }
+
+/* -------------------------------------------------------- reporte */
+.aviso {
+  background: #fff8e8; border: 1px solid #f0dcb0; border-left: 4px solid var(--alerta);
+  color: #4a3c1a; padding: .8rem 1rem; border-radius: .3rem; margin-bottom: 1.25rem;
+}
+
+.cabecera-reporte { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between; }
+.acciones { display: flex; gap: .5rem; flex-wrap: wrap; }
+
+.linea {
+  position: relative; height: 2.4rem; background: var(--sin-defecto);
+  border-radius: .3rem; overflow: hidden; margin-top: .5rem;
+}
+.tramo { position: absolute; top: 0; bottom: 0; cursor: pointer; }
+.tramo:focus-visible { outline: 3px solid #1b2733; outline-offset: -3px; }
+.marcas { display: flex; justify-content: space-between; color: var(--suave); font-size: .8rem; margin-top: .25rem; }
+
+.leyenda { display: flex; flex-wrap: wrap; gap: .25rem 1rem; margin-top: .75rem; font-size: .85rem; color: var(--suave); }
+.leyenda span { display: inline-flex; align-items: center; gap: .35rem; }
+.muestra { width: .9rem; height: .9rem; border-radius: .2rem; display: inline-block; }
+
+table { width: 100%; border-collapse: collapse; margin-top: .5rem; background: #fff; }
+th, td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid var(--borde); font-size: .92rem; }
+th { cursor: pointer; user-select: none; color: var(--suave); font-weight: 600; }
+th:hover { color: var(--tinta); }
+tbody tr:hover { background: #f0f5fa; }
+
+.pastilla { display: inline-flex; align-items: center; gap: .4rem; }
+
+/* Confianza graduada, no numérica: el modelo no tiene esa precisión. */
+.conf { display: inline-flex; align-items: center; gap: .4rem; }
+.conf-barras { display: inline-flex; gap: 2px; }
+.conf-barra { width: .32rem; height: .8rem; border-radius: 1px; background: var(--borde); }
+.conf-barra.activa { background: var(--acento); }
+
+@media (max-width: 34rem) {
+  header { padding-top: 1.25rem; }
+  .cabecera-reporte { flex-direction: column; align-items: flex-start; }
+  th:nth-child(2), td:nth-child(2) { display: none; }  /* Fin cabe en Duración */
+}

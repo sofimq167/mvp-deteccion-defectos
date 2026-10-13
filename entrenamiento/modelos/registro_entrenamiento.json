@@ -1,0 +1,43 @@
+{
+  "semilla": 20260828,
+  "epocas": 3,
+  "lote": 32,
+  "tasa": 0.001,
+  "manifiesto": "manifiesto_v2.csv",
+  "limite_por_clase": 150,
+  "n_entrenamiento": 750,
+  "n_validacion": 750,
+  "pesos_preentrenados": "modelos\\Cnn6_mAP=0.343.pth",
+  "resumen_pesos": {
+    "cargados": 31,
+    "descartados": [
+      "fc_audioset.weight",
+      "fc_audioset.bias"
+    ],
+    "sin_inicializar": [
+      "cabeza.weight",
+      "cabeza.bias"
+    ]
+  },
+  "historia": [
+    {
+      "epoca": 1,
+      "perdida": 1.6185776669046152,
+      "exactitud_balanceada_validacion": 0.30933333333333335,
+      "segundos": 35.1
+    },
+    {
+      "epoca": 2,
+      "perdida": 1.451225731683814,
+      "exactitud_balanceada_validacion": 0.36133333333333334,
+      "segundos": 33.0
+    },
+    {
+      "epoca": 3,
+      "perdida": 1.3632912946783977,
+      "exactitud_balanceada_validacion": 0.3546666666666667,
+      "segundos": 32.9
+    }
+  ],
+  "mejor_exactitud_balanceada_validacion": 0.36133333333333334
+}

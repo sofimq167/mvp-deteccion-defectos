@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Detección de defectos de audio</title>
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+<header>
+  <h1>Detección de defectos de audio</h1>
+  <p class="sub">Revisión técnica de una pista antes de la masterización</p>
+</header>
+
+<main>
+
+  <!-- ---------------------------------------------- 1. carga -->
+  <section id="pantalla-carga">
+    <div id="zona" class="zona">
+      <p class="zona-titulo">Arrastrá una pista aquí</p>
+      <p class="zona-ayuda">o</p>
+      <label class="boton" for="archivo">Elegir archivo</label>
+      <input type="file" id="archivo" accept=".wav,audio/wav,audio/x-wav" hidden>
+      <p class="zona-nota">Formato WAV · hasta 15 minutos · se analiza una pista a la vez</p>
+    </div>
+    <p id="error-carga" class="error" hidden></p>
+  </section>
+
+  <!-- ------------------------------------------ 2. progreso -->
+  <section id="pantalla-progreso" hidden>
+    <h2 id="nombre-pista"></h2>
+    <div class="barra"><div id="barra-avance" class="barra-avance"></div></div>
+    <p id="texto-progreso" class="sub">Preparando el análisis…</p>
+    <p class="zona-nota">El tiempo depende de la duración de la pista.</p>
+  </section>
+
+  <!-- ------------------------------------------- 3. reporte -->
+  <section id="pantalla-reporte" hidden>
+
+    <div class="aviso" role="note">
+      <strong>Este resultado no sustituye tu escucha.</strong>
+      Un tramo no señalado no garantiza estar libre de defectos.
+    </div>
+
+    <div class="cabecera-reporte">
+      <h2 id="titulo-reporte"></h2>
+      <div class="acciones">
+        <button id="btn-exportar" class="boton secundario">Exportar reporte</button>
+        <button id="btn-otra" class="boton">Analizar otra pista</button>
+      </div>
+    </div>
+
+    <p id="resumen" class="sub"></p>
+
+    <h3>Línea de tiempo</h3>
+    <div id="linea" class="linea"></div>
+    <div id="marcas" class="marcas"></div>
+    <div id="leyenda" class="leyenda"></div>
+
+    <h3>Hallazgos</h3>
+    <table id="tabla">
+      <thead>
+        <tr>
+          <th data-col="inicio_s">Inicio</th>
+          <th data-col="fin_s">Fin</th>
+          <th data-col="nombre">Defecto</th>
+          <th data-col="duracion_s">Duración</th>
+          <th data-col="confianza">Confianza</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-tabla"></tbody>
+    </table>
+    <p id="sin-hallazgos" class="sub" hidden>
+      No se detectaron defectos de los cuatro tipos considerados.
+      Eso no garantiza que la pista esté limpia: revisala igualmente.
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  <p class="sub">Detecta zumbido, ruido de fondo, distorsión y clics ·
+     El material cargado se elimina al cerrar la sesión</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

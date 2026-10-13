@@ -1,0 +1,40 @@
+# Despliegue del sistema: los tres contenedores del diagrama de nivel 2.
+#
+#   docker compose up --build
+#   -> la aplicacion queda en http://localhost:8080
+#
+# Fijarse en que el servicio de analisis NO publica puerto: solo es
+# alcanzable desde la red interna, que es lo que exige RNF-07.
+
+services:
+
+  web:
+    image: nginx:1.27-alpine
+    container_name: deteccion-web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - servicio
+    restart: unless-stopped
+
+  servicio:
+    build:
+      context: ..                       # la raiz, para incluir `nucleo`
+      dockerfile: sistema/servicio/Dockerfile
+    container_name: deteccion-servicio
+    # sin `ports`: no se expone al exterior (RNF-07)
+    environment:
+      RUTA_MODELO: /app/modelo/mejor.pt
+      RUTA_TEMPORAL: /tmp/analisis
+      VIDA_SESION_S: "3600"
+      LOTE_INFERENCIA: "32"
+    volumes:
+      - ./servicio/modelo:/app/modelo:ro   # el modelo, como artefacto
+      - temporal:/tmp/analisis
+    restart: unless-stopped
+
+volumes:
+  temporal:        # almacenamiento temporal: no persiste entre despliegues
