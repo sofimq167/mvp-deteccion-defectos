@@ -30,7 +30,12 @@ from src.datos import ConjuntoPrecalculado, ConjuntoSegmentos
 
 UMBRAL_RNF01_EB = 0.90
 UMBRAL_RNF01_EXH = 0.80
-LINEA_BASE_DESCRIPTORES = 0.408     # medido en la verificacion del conjunto
+# Linea base acustica: regresion logistica sobre siete descriptores
+# elementales, entrenada en la particion de entrenamiento y medida en la
+# de validacion. La produce `src.linea_base`. El valor corresponde al
+# manifiesto v2, posterior al reetiquetado de los clics; sobre el v1 era
+# 0,408, mas bajo porque la clase clic incluia segmentos sin ningun clic.
+LINEA_BASE_DESCRIPTORES = 0.463
 
 
 def main() -> None:

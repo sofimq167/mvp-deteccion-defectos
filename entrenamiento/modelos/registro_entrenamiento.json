@@ -1,12 +1,12 @@
 {
   "semilla": 20260828,
-  "epocas": 3,
+  "epocas": 10,
   "lote": 32,
   "tasa": 0.001,
   "manifiesto": "manifiesto_v2.csv",
-  "limite_por_clase": 150,
-  "n_entrenamiento": 750,
-  "n_validacion": 750,
+  "limite_por_clase": 700,
+  "n_entrenamiento": 3500,
+  "n_validacion": 3500,
   "pesos_preentrenados": "modelos\\Cnn6_mAP=0.343.pth",
   "resumen_pesos": {
     "cargados": 31,
@@ -22,22 +22,64 @@
   "historia": [
     {
       "epoca": 1,
-      "perdida": 1.6185776669046152,
-      "exactitud_balanceada_validacion": 0.30933333333333335,
-      "segundos": 35.1
+      "perdida": 1.4401376837984137,
+      "exactitud_balanceada_validacion": 0.38742857142857146,
+      "segundos": 388.2
     },
     {
       "epoca": 2,
-      "perdida": 1.451225731683814,
-      "exactitud_balanceada_validacion": 0.36133333333333334,
-      "segundos": 33.0
+      "perdida": 1.2593646902556812,
+      "exactitud_balanceada_validacion": 0.4302857142857143,
+      "segundos": 254.6
     },
     {
       "epoca": 3,
-      "perdida": 1.3632912946783977,
-      "exactitud_balanceada_validacion": 0.3546666666666667,
-      "segundos": 32.9
+      "perdida": 1.1671320878037619,
+      "exactitud_balanceada_validacion": 0.42457142857142854,
+      "segundos": 184.9
+    },
+    {
+      "epoca": 4,
+      "perdida": 1.0755016989664201,
+      "exactitud_balanceada_validacion": 0.4642857142857143,
+      "segundos": 307.0
+    },
+    {
+      "epoca": 5,
+      "perdida": 1.0296553603006064,
+      "exactitud_balanceada_validacion": 0.46799999999999997,
+      "segundos": 236.8
+    },
+    {
+      "epoca": 6,
+      "perdida": 0.9349432057196941,
+      "exactitud_balanceada_validacion": 0.47542857142857137,
+      "segundos": 273.8
+    },
+    {
+      "epoca": 7,
+      "perdida": 0.8692270309553234,
+      "exactitud_balanceada_validacion": 0.4805714285714286,
+      "segundos": 243.6
+    },
+    {
+      "epoca": 8,
+      "perdida": 0.8170811265980432,
+      "exactitud_balanceada_validacion": 0.4837142857142857,
+      "segundos": 201.6
+    },
+    {
+      "epoca": 9,
+      "perdida": 0.7720102829123856,
+      "exactitud_balanceada_validacion": 0.4842857142857143,
+      "segundos": 255.6
+    },
+    {
+      "epoca": 10,
+      "perdida": 0.7553252539503466,
+      "exactitud_balanceada_validacion": 0.49314285714285716,
+      "segundos": 192.0
     }
   ],
-  "mejor_exactitud_balanceada_validacion": 0.36133333333333334
+  "mejor_exactitud_balanceada_validacion": 0.49314285714285716
 }

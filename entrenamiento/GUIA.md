@@ -12,11 +12,15 @@ El objetivo no es "que entrene", es cumplir dos requisitos de la SRS:
 |---|---|
 | **RNF-01** · Exactitud balanceada sobre prueba | ≥ 0,90 |
 | **RNF-01** · Exhaustividad en *cada* una de las 5 clases | ≥ 0,80 |
-| **RNF-02** · Superar las líneas base | > 0,408 |
+| **RNF-02** · Superar la línea base acústica | > 0,463 |
 
-El 0,408 es la regresión logística sobre cinco descriptores elementales. Si el
-modelo no lo supera con holgura, la red no está aportando nada que no diera un
-clasificador trivial.
+El 0,463 es una regresión logística sobre siete descriptores elementales de la
+forma de onda: RMS, pico, factor de cresta, centroide espectral, tasa de cruces
+por cero, y las proporciones de energía bajo 200 Hz y sobre 6000 Hz (estas dos
+últimas puestas a propósito como pistas de *hum* y de *hiss*). Se entrena en la
+partición de entrenamiento y se mide en la de validación, y la reproduce
+`src/linea_base.py`. Si el modelo no la supera con holgura, la red no está
+aportando nada que no diera un clasificador trivial.
 
 ---
 
