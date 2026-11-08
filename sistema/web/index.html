@@ -3,87 +3,459 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Detección de defectos de audio</title>
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#0B0F10">
+<title>sonar · Detección de defectos de audio</title>
+<meta name="description" content="Revisión técnica automática de una pista de mezcla: zumbido, ruido de fondo, distorsión y clics, con su ubicación en el tiempo.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="estilos.css">
 </head>
-<body>
+<body data-pantalla="carga">
 
-<header>
-  <h1>Detección de defectos de audio</h1>
-  <p class="sub">Revisión técnica de una pista antes de la masterización</p>
-</header>
+<!-- ═══════════════════════════════════════════════ recursos SVG
+     Los trazos del logo son los de sonar-logo.svg, sin alterar. Se
+     declaran una vez y se reutilizan: apilado (inicio), en linea
+     (cabecera compacta) y el isotipo solo (zona de carga). -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <defs>
+    <g id="logo-iso">
+      <path d="M686.01 617.201L686.01 410.262C686.01 410.262 700.825 378.943 714.465 363.701C728.105 348.458 748.092 335.246 768.786 332.66C789.48 330.073 864.495 332.66 864.495 332.66L859.322 553.969C859.322 553.969 832.327 601.81 802.413 617.201C781.271 628.079 742.919 628.985 742.919 628.985C742.919 628.985 686.01 627.548 686.01 617.201Z" fill="black"/>
+      <path d="M216 584.597L216 379.727C216 379.727 230.815 348.721 244.455 333.631C258.095 318.541 278.082 305.462 298.776 302.901C319.47 300.34 394.485 302.901 394.485 302.901L389.312 521.997C389.312 521.997 362.317 569.359 332.403 584.597C311.261 595.366 272.908 596.263 272.908 596.263C272.908 596.263 216 594.841 216 584.597Z" fill="black"/>
+      <path d="M541.5 156C594.828 156 638.223 195.335 639.63 244.35H639.666V651.741H639.631C639.654 652.557 639.666 653.375 639.666 654.196C639.666 704.346 595.715 745 541.5 745C487.284 745 443.333 704.346 443.333 654.196C443.333 653.375 443.346 652.557 443.369 651.741H443.333V244.35H443.369C444.775 195.335 488.171 156 541.5 156Z" fill="black"/>
+    </g>
+    <g id="logo-palabra">
+      <path d="M263.407 923.509C246.437 923.509 232.528 919.835 221.682 912.488C210.835 905.14 204.274 894.643 202 880.997L232.441 873.124C233.666 879.247 235.717 884.059 238.596 887.557C241.491 891.056 245.077 893.553 249.355 895.048C253.649 896.528 258.333 897.267 263.407 897.267C271.105 897.267 276.79 895.915 280.464 893.211C284.138 890.492 285.975 887.12 285.975 883.096C285.975 879.072 284.226 875.971 280.727 873.792C277.228 871.597 271.629 869.8 263.932 868.401L256.584 867.089C247.487 865.339 239.176 862.937 231.654 859.884C224.131 856.814 218.095 852.568 213.547 847.144C208.998 841.721 206.724 834.723 206.724 826.151C206.724 813.204 211.447 803.28 220.894 796.378C230.342 789.459 242.763 786 258.158 786C272.679 786 284.75 789.237 294.373 795.71C303.995 802.183 310.293 810.668 313.267 821.165L282.564 830.612C281.164 823.964 278.317 819.24 274.023 816.441C269.745 813.642 264.457 812.242 258.158 812.242C251.86 812.242 247.049 813.34 243.725 815.534C240.401 817.713 238.739 820.727 238.739 824.576C238.739 828.775 240.489 831.884 243.988 833.904C247.487 835.908 252.21 837.435 258.158 838.484L265.506 839.797C275.303 841.546 284.178 843.868 292.13 846.763C300.098 849.641 306.396 853.753 311.025 859.097C315.669 864.425 317.991 871.637 317.991 880.735C317.991 894.38 313.044 904.925 303.152 912.368C293.275 919.796 280.027 923.509 263.407 923.509Z" fill="#0B0F10"/>
+      <path d="M403.54 923.509C390.594 923.509 378.96 920.885 368.638 915.637C358.316 910.388 350.181 902.778 344.233 892.806C338.285 882.834 335.311 870.85 335.311 856.854V852.655C335.311 838.659 338.285 826.675 344.233 816.703C350.181 806.731 358.316 799.121 368.638 793.873C378.96 788.624 390.594 786 403.54 786C416.487 786 428.121 788.624 438.443 793.873C448.764 799.121 456.9 806.731 462.848 816.703C468.796 826.675 471.77 838.659 471.77 852.655V856.854C471.77 870.85 468.796 882.834 462.848 892.806C456.9 902.778 448.764 910.388 438.443 915.637C428.121 920.885 416.487 923.509 403.54 923.509ZM403.54 894.118C413.687 894.118 422.085 890.842 428.733 884.289C435.381 877.721 438.705 868.313 438.705 856.067V853.443C438.705 841.196 435.421 831.797 428.852 825.244C422.3 818.676 413.862 815.391 403.54 815.391C393.393 815.391 384.996 818.676 378.348 825.244C371.7 831.797 368.376 841.196 368.376 853.443V856.067C368.376 868.313 371.7 877.721 378.348 884.289C384.996 890.842 393.393 894.118 403.54 894.118Z" fill-rule="evenodd" clip-rule="evenodd" fill="#0B0F10"/>
+      <path d="M530.028 919.836H496.963V789.674H529.503V806.731H534.227C536.326 802.183 540.262 797.857 546.036 793.753C551.809 789.634 560.556 787.575 572.278 787.575C582.425 787.575 591.3 789.897 598.902 794.541C606.52 799.169 612.429 805.555 616.627 813.698C620.826 821.825 622.925 831.312 622.925 842.159V919.836H589.86V844.783C589.86 834.986 587.459 827.638 582.656 822.739C577.837 817.841 570.966 815.391 562.043 815.391C551.896 815.391 544.024 818.763 538.425 825.507C532.827 832.234 530.028 841.634 530.028 853.705V919.836Z" fill="#0B0F10"/>
+      <path d="M693.779 923.509C684.507 923.509 676.197 921.895 668.849 918.666C661.502 915.422 655.681 910.698 651.386 904.496C647.108 898.277 644.969 890.707 644.969 881.784C644.969 872.862 647.108 865.387 651.386 859.359C655.681 853.315 661.637 848.767 669.255 845.713C676.857 842.643 685.557 841.109 695.354 841.109H731.043V833.761C731.043 827.638 729.119 822.612 725.27 818.684C721.421 814.739 715.298 812.767 706.901 812.767C698.678 812.767 692.555 814.652 688.531 818.421C684.507 822.175 681.883 827.025 680.658 832.974L650.217 822.739C652.317 816.091 655.688 810.016 660.333 804.513C664.961 798.994 671.171 794.533 678.965 791.129C686.742 787.71 696.229 786 707.425 786C724.57 786 738.129 790.286 748.101 798.859C758.073 807.431 763.059 819.853 763.059 836.123V884.671C763.059 889.919 765.508 892.543 770.407 892.543H780.904V919.835H758.86C752.387 919.835 747.051 918.261 742.852 915.112C738.654 911.963 736.554 907.764 736.554 902.516V902.253H731.568C730.868 904.353 729.294 907.112 726.845 910.531C724.395 913.935 720.547 916.949 715.298 919.573C710.05 922.197 702.877 923.509 693.779 923.509ZM699.553 896.742C708.825 896.742 716.388 894.166 722.24 889.013C728.109 883.844 731.043 876.973 731.043 868.401V865.776H697.716C691.593 865.776 686.782 867.089 683.283 869.713C679.784 872.337 678.034 876.011 678.034 880.735C678.034 885.458 679.871 889.307 683.545 892.281C687.219 895.255 692.555 896.742 699.553 896.742Z" fill-rule="evenodd" clip-rule="evenodd" fill="#0B0F10"/>
+      <path d="M832.863 919.835H799.798V789.674H832.339V804.37H837.062C838.986 799.121 842.175 795.272 846.629 792.823C851.098 790.374 856.306 789.149 862.255 789.149H878V818.54H861.73C853.332 818.54 846.422 820.775 840.998 825.244C835.575 829.697 832.863 836.56 832.863 845.832V919.835Z" fill="#0B0F10"/>
+    </g>
 
-<main>
+    <!-- Glifos de los cuatro defectos: barras redondeadas, como el logo.
+         Cada patron describe el defecto, no decora. -->
+    <symbol id="g-distorsion" viewBox="0 0 28 24">
+      <rect x="1"  y="8"  width="2.4" height="8"  rx="1.2"/><rect x="5.5" y="3" width="2.4" height="18" rx="1.2"/>
+      <rect x="10" y="3"  width="2.4" height="18" rx="1.2"/><rect x="14.5" y="3" width="2.4" height="18" rx="1.2"/>
+      <rect x="19" y="3"  width="2.4" height="18" rx="1.2"/><rect x="23.5" y="8" width="2.4" height="8" rx="1.2"/>
+    </symbol>
+    <symbol id="g-hiss" viewBox="0 0 28 24">
+      <rect x="1"  y="9"  width="2.4" height="6"  rx="1.2"/><rect x="5.5" y="7.5" width="2.4" height="9" rx="1.2"/>
+      <rect x="10" y="10" width="2.4" height="4"  rx="1.2"/><rect x="14.5" y="6.5" width="2.4" height="11" rx="1.2"/>
+      <rect x="19" y="9"  width="2.4" height="6"  rx="1.2"/><rect x="23.5" y="8" width="2.4" height="8" rx="1.2"/>
+    </symbol>
+    <symbol id="g-clic" viewBox="0 0 28 24">
+      <rect x="1"  y="10" width="2.4" height="4"  rx="1.2"/><rect x="5.5" y="10" width="2.4" height="4" rx="1.2"/>
+      <rect x="10" y="1"  width="2.4" height="22" rx="1.2"/><rect x="14.5" y="10" width="2.4" height="4" rx="1.2"/>
+      <rect x="19" y="10" width="2.4" height="4"  rx="1.2"/><rect x="23.5" y="10" width="2.4" height="4" rx="1.2"/>
+    </symbol>
+    <symbol id="g-hum" viewBox="0 0 28 24">
+      <rect x="1"  y="5"  width="2.4" height="14" rx="1.2"/><rect x="5.5" y="9" width="2.4" height="6" rx="1.2"/>
+      <rect x="10" y="5"  width="2.4" height="14" rx="1.2"/><rect x="14.5" y="9" width="2.4" height="6" rx="1.2"/>
+      <rect x="19" y="5"  width="2.4" height="14" rx="1.2"/><rect x="23.5" y="9" width="2.4" height="6" rx="1.2"/>
+    </symbol>
 
-  <!-- ---------------------------------------------- 1. carga -->
-  <section id="pantalla-carga">
-    <div id="zona" class="zona">
-      <p class="zona-titulo">Arrastrá una pista aquí</p>
-      <p class="zona-ayuda">o</p>
-      <label class="boton" for="archivo">Elegir archivo</label>
-      <input type="file" id="archivo" accept=".wav,audio/wav,audio/x-wav" hidden>
-      <p class="zona-nota">Formato WAV · hasta 15 minutos · se analiza una pista a la vez</p>
-    </div>
-    <p id="error-carga" class="error" hidden></p>
-  </section>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.6v12.8c0 .8.9 1.3 1.6.8l10-6.4a1 1 0 0 0 0-1.6l-10-6.4C8.9 4.3 8 4.8 8 5.6Z" fill="currentColor"/></symbol>
+    <symbol id="i-pausa" viewBox="0 0 24 24"><rect x="6.5" y="5" width="4" height="14" rx="1.4" fill="currentColor"/><rect x="13.5" y="5" width="4" height="14" rx="1.4" fill="currentColor"/></symbol>
+  </defs>
+</svg>
 
-  <!-- ------------------------------------------ 2. progreso -->
-  <section id="pantalla-progreso" hidden>
-    <h2 id="nombre-pista"></h2>
-    <div class="barra"><div id="barra-avance" class="barra-avance"></div></div>
-    <p id="texto-progreso" class="sub">Preparando el análisis…</p>
-    <p class="zona-nota">El tiempo depende de la duración de la pista.</p>
-  </section>
+<div class="hoja">
 
-  <!-- ------------------------------------------- 3. reporte -->
-  <section id="pantalla-reporte" hidden>
+  <header class="cabecera">
+    <a class="marca" href="./" aria-label="sonar, volver al inicio">
+      <svg class="marca-apilada" viewBox="202 156 676 768" aria-hidden="true"><use href="#logo-iso"/><use href="#logo-palabra"/></svg>
+      <span class="marca-linea" aria-hidden="true">
+        <svg class="marca-iso" viewBox="216 156 649 589"><use href="#logo-iso"/></svg>
+        <svg class="marca-palabra" viewBox="202 786 676 138"><use href="#logo-palabra"/></svg>
+      </span>
+    </a>
 
-    <div class="aviso" role="note">
-      <strong>Este resultado no sustituye tu escucha.</strong>
-      Un tramo no señalado no garantiza estar libre de defectos.
-    </div>
+    <nav class="nav" aria-label="Principal">
+      <button type="button" id="nav-analizar" class="nav-item" aria-current="page">Analizar audio</button>
+      <button type="button" id="nav-ayuda" class="nav-item">Ayuda</button>
+    </nav>
 
-    <div class="cabecera-reporte">
-      <h2 id="titulo-reporte"></h2>
-      <div class="acciones">
-        <button id="btn-exportar" class="boton secundario">Exportar reporte</button>
-        <button id="btn-otra" class="boton">Analizar otra pista</button>
+    <p class="lema">Audio más limpio, mejores mezclas.</p>
+
+    <div class="cabecera-sesion">
+      <p class="cabecera-archivo" id="cabecera-archivo"></p>
+      <div class="cabecera-acciones">
+        <button id="btn-otra" type="button" class="boton boton-texto">Analizar otro archivo</button>
+        <!-- RF-09 · el reporte se lleva en un archivo estructurado -->
+        <button id="btn-exportar" type="button" class="boton boton-borde">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 4v10.5m0 0 4-4m-4 4-4-4"/><path d="M4.5 19.5h15"/>
+          </svg>
+          Descargar reporte
+        </button>
       </div>
     </div>
+  </header>
 
-    <p id="resumen" class="sub"></p>
+  <main>
 
-    <h3>Línea de tiempo</h3>
-    <div id="linea" class="linea"></div>
-    <div id="marcas" class="marcas"></div>
-    <div id="leyenda" class="leyenda"></div>
+    <!-- ═════════════════════════════════════════════ 1 · carga -->
+    <section id="pantalla-carga" class="pantalla inicio">
 
-    <h3>Hallazgos</h3>
-    <table id="tabla">
-      <thead>
-        <tr>
-          <th data-col="inicio_s">Inicio</th>
-          <th data-col="fin_s">Fin</th>
-          <th data-col="nombre">Defecto</th>
-          <th data-col="duracion_s">Duración</th>
-          <th data-col="confianza">Confianza</th>
-        </tr>
-      </thead>
-      <tbody id="cuerpo-tabla"></tbody>
-    </table>
-    <p id="sin-hallazgos" class="sub" hidden>
-      No se detectaron defectos de los cuatro tipos considerados.
-      Eso no garantiza que la pista esté limpia: revisala igualmente.
-    </p>
-  </section>
+      <div class="inicio-texto">
+        <h1 class="titular">Detecta defectos en tu mezcla</h1>
+        <p class="entradilla">
+          Analiza tu pista de audio y encuentra zumbido, ruido de fondo,
+          distorsión y clics con una red neuronal preentrenada (PANN).
+          Recibe un reporte con la ubicación temporal de cada hallazgo.
+        </p>
+      </div>
 
-</main>
+      <ul class="defectos" aria-label="Defectos que se detectan">
+        <li data-clase="distorsion"><svg class="glifo" aria-hidden="true"><use href="#g-distorsion"/></svg>
+          <span>Distorsión<small>Saturación</small></span></li>
+        <li data-clase="hiss"><svg class="glifo" aria-hidden="true"><use href="#g-hiss"/></svg>
+          <span>Ruido de fondo<small>Hiss</small></span></li>
+        <li data-clase="clic"><svg class="glifo" aria-hidden="true"><use href="#g-clic"/></svg>
+          <span>Clics<small>Transitorios</small></span></li>
+        <li data-clase="hum"><svg class="glifo" aria-hidden="true"><use href="#g-hum"/></svg>
+          <span>Zumbido<small>Hum</small></span></li>
+      </ul>
 
-<footer>
-  <p class="sub">Detecta zumbido, ruido de fondo, distorsión y clics ·
-     El material cargado se elimina al cerrar la sesión</p>
+      <div class="inicio-escenario">
+        <!-- Composicion abstracta a partir de las barras del logo -->
+        <svg class="arte" viewBox="0 0 1000 1000" preserveAspectRatio="xMinYMid slice" aria-hidden="true" focusable="false">
+          <defs>
+            <filter id="borde-suave" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="22"/>
+            </filter>
+            <filter id="humo" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="38"/>
+            </filter>
+            <filter id="grano" x="0" y="0" width="100%" height="100%">
+              <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="7" result="ruido"/>
+              <feColorMatrix in="ruido" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -.9 .7" result="motas"/>
+              <feComposite in="motas" in2="SourceGraphic" operator="in" result="motas-dentro"/>
+              <feBlend in="motas-dentro" in2="SourceGraphic" mode="multiply"/>
+            </filter>
+            <linearGradient id="barra-luz" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0"   stop-color="#F1EFEA"/>
+              <stop offset=".16" stop-color="#C9C6C0"/>
+              <stop offset=".42" stop-color="#5A5855"/>
+              <stop offset=".78" stop-color="#1B1C1D"/>
+              <stop offset="1"   stop-color="#111314"/>
+            </linearGradient>
+            <linearGradient id="barra-volumen" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0"   stop-color="#fff" stop-opacity=".32"/>
+              <stop offset=".3"  stop-color="#fff" stop-opacity="0"/>
+              <stop offset=".72" stop-color="#000" stop-opacity=".12"/>
+              <stop offset="1"   stop-color="#000" stop-opacity=".6"/>
+            </linearGradient>
+            <linearGradient id="pliegue" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0"  stop-color="#9A9792" stop-opacity=".0"/>
+              <stop offset=".35" stop-color="#9A9792" stop-opacity=".55"/>
+              <stop offset="1"  stop-color="#9A9792" stop-opacity="0"/>
+            </linearGradient>
+            <g id="barra">
+              <rect width="100" height="700" rx="50" fill="url(#barra-luz)"/>
+              <rect width="100" height="700" rx="50" fill="url(#barra-volumen)"/>
+            </g>
+          </defs>
+
+          <path class="arte-fondo" filter="url(#borde-suave)"
+                d="M150 -60 C 60 220, 240 520, 170 760 S 250 1000, 330 1080 L 1300 1080 L 1300 -60 Z"/>
+          <path d="M235 -40 C 160 260, 360 520, 300 1040" fill="none" stroke="url(#pliegue)"
+                stroke-width="120" filter="url(#humo)"/>
+          <ellipse cx="560" cy="120" rx="320" ry="200" fill="#4A4845" opacity=".35" filter="url(#humo)"/>
+
+          <g filter="url(#grano)">
+            <use href="#barra" x="470" y="170" opacity=".5"/>
+            <use href="#barra" x="600" y="80"/>
+            <use href="#barra" x="725" y="225"/>
+            <use href="#barra" x="850" y="320" opacity=".92"/>
+            <use href="#barra" x="975" y="430" opacity=".85"/>
+          </g>
+        </svg>
+
+        <div class="carga">
+          <p class="estado-servicio" id="estado-servicio" role="status" hidden></p>
+
+          <div id="zona" class="zona" tabindex="0" role="button"
+               aria-label="Elegir o arrastrar un archivo WAV" aria-describedby="condiciones">
+            <svg class="zona-iso" viewBox="216 156 649 589" aria-hidden="true"><use href="#logo-iso"/></svg>
+            <p class="zona-titulo">Arrastra tu archivo de audio aquí</p>
+            <p class="zona-sub">o haz clic para seleccionar</p>
+            <span class="boton boton-primario">Elegir archivo</span>
+            <input type="file" id="archivo" accept=".wav,audio/wav,audio/x-wav,audio/wave" hidden>
+          </div>
+
+          <ul class="condiciones" id="condiciones">
+            <li>Formato: WAV</li>
+            <li>Hasta 15 minutos</li>
+            <li>Máx. 200 MB</li>
+            <li>Una pista a la vez</li>
+          </ul>
+
+          <div id="error-carga" class="error" role="alert" hidden>
+            <p class="error-titulo">No se pudo analizar el archivo</p>
+            <p id="error-texto"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════ 2 · progreso -->
+    <section id="pantalla-progreso" class="pantalla progreso" hidden>
+      <svg class="progreso-trama" viewBox="0 0 800 400" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <path d="M0 250 C 160 140, 300 330, 480 210 S 700 150, 800 230"/>
+        <path d="M0 262 C 170 160, 310 340, 490 224 S 705 168, 800 244"/>
+        <path d="M0 274 C 180 180, 320 350, 500 238 S 710 186, 800 258"/>
+        <path d="M0 286 C 190 200, 330 360, 510 252 S 715 204, 800 272"/>
+        <path d="M0 298 C 200 220, 340 370, 520 266 S 720 222, 800 286"/>
+        <path d="M0 310 C 210 240, 350 380, 530 280 S 725 240, 800 300"/>
+      </svg>
+
+      <div class="progreso-rejilla">
+        <div class="progreso-principal">
+          <h1 class="titulo-pantalla">Analizando<br>tu audio</h1>
+          <p class="entradilla">La red neuronal PANN está procesando la señal y buscando posibles defectos.</p>
+
+          <div class="anillo-envoltura" id="anillo" data-modo="indeterminado"
+               role="progressbar" aria-label="Avance del análisis" aria-valuemin="0" aria-valuemax="100">
+            <svg class="anillo" viewBox="0 0 160 160" aria-hidden="true">
+              <circle class="anillo-fondo" cx="80" cy="80" r="72"/>
+              <circle id="anillo-avance" class="anillo-avance" cx="80" cy="80" r="72"/>
+            </svg>
+            <div class="anillo-centro">
+              <span class="anillo-cifra"><span id="porcentaje">0</span><small>%</small></span>
+              <span id="texto-etapa" class="anillo-rotulo" aria-live="polite">Enviando…</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="progreso-lateral">
+          <ol class="etapas" id="etapas">
+            <li data-etapa="carga">
+              <span class="etapa-marca" aria-hidden="true"></span>
+              <div>
+                <p class="etapa-titulo" id="etapa-carga-titulo">Enviando archivo</p>
+                <p class="etapa-detalle" id="nombre-pista"></p>
+              </div>
+            </li>
+            <li data-etapa="preparando">
+              <span class="etapa-marca" aria-hidden="true"></span>
+              <div>
+                <p class="etapa-titulo">Segmentando audio</p>
+                <p class="etapa-detalle" id="etapa-preparando-detalle">Fragmentos de un segundo</p>
+              </div>
+            </li>
+            <li data-etapa="clasificando">
+              <span class="etapa-marca" aria-hidden="true"></span>
+              <div>
+                <p class="etapa-titulo">Clasificando fragmentos</p>
+                <p class="etapa-detalle">Cinco clases posibles por fragmento</p>
+              </div>
+            </li>
+            <li data-etapa="consolidando">
+              <span class="etapa-marca" aria-hidden="true"></span>
+              <div>
+                <p class="etapa-titulo">Generando resultados</p>
+                <p class="etapa-detalle">Agrupando fragmentos contiguos en hallazgos</p>
+              </div>
+            </li>
+          </ol>
+
+          <div class="progreso-pie">
+            <p id="texto-detalle" class="progreso-meta"></p>
+            <button id="btn-cancelar" type="button" class="boton boton-borde">Cancelar análisis</button>
+          </div>
+        </div>
+      </div>
+
+      <figure class="onda-progreso" id="onda-progreso" hidden>
+        <div class="pista pista-onda"><canvas id="lienzo-onda-progreso"></canvas></div>
+        <div class="regla" id="regla-progreso" aria-hidden="true"></div>
+        <figcaption class="nota">Forma de onda de tu archivo, leída en el navegador.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ 3 · reporte -->
+    <section id="pantalla-reporte" class="pantalla reporte" hidden>
+
+      <div class="reporte-cabeza">
+        <h1 class="titulo-pantalla">Resultados del análisis</h1>
+        <p class="entradilla" id="resumen-reporte"></p>
+      </div>
+
+      <!-- RF-08: visible sin desplazar y sin forma de descartarlo -->
+      <div class="aviso" role="note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/><path d="M12 7.8v5M12 16.2h.01"/>
+        </svg>
+        <p><strong>Una ayuda para la revisión, no un veredicto.</strong>
+           <span id="texto-aviso">Este resultado no sustituye la escucha del ingeniero.
+           Un segmento no señalado no garantiza estar libre de defectos.</span></p>
+      </div>
+
+      <ul class="cifras" id="cifras" aria-label="Hallazgos por tipo de defecto"></ul>
+
+      <div class="reporte-rejilla">
+
+        <!-- RF-05: la linea de tiempo -->
+        <section class="visor" aria-label="Línea de tiempo de la pista">
+          <div class="visor-rejilla">
+            <button id="btn-play" type="button" class="btn-play" aria-label="Reproducir la pista">
+              <svg class="icono-play"><use href="#i-play"/></svg>
+              <svg class="icono-pausa" hidden><use href="#i-pausa"/></svg>
+            </button>
+
+            <div class="pista pista-onda" id="linea" role="group"
+                 aria-label="Forma de onda con los hallazgos. Toca para ubicarte en la pista">
+              <div class="capa-tramos" id="tramos-onda"></div>
+              <canvas id="lienzo-onda"></canvas>
+              <p class="pista-espera" id="onda-espera">Leyendo la forma de onda…</p>
+            </div>
+
+            <div class="eje-frec" id="eje-frec" aria-hidden="true"></div>
+            <div class="pista pista-espectro" id="pista-espectro" aria-hidden="true">
+              <canvas id="lienzo-espectro"></canvas>
+              <div class="capa-tramos" id="tramos-espectro"></div>
+              <p class="pista-espera" id="espectro-espera">Calculando el espectrograma…</p>
+            </div>
+
+            <div class="capa-cursor" aria-hidden="true"><div id="playhead" class="playhead" hidden></div></div>
+
+            <span id="tiempo-actual" class="tiempo">0:00</span>
+            <div class="regla" id="regla" aria-hidden="true"></div>
+          </div>
+          <p class="nota" id="visor-nota"></p>
+        </section>
+
+        <!-- Detalle del hallazgo seleccionado -->
+        <aside class="detalle" id="detalle" aria-labelledby="detalle-titulo">
+          <div class="detalle-cabeza">
+            <h2 id="detalle-titulo">Detalle del hallazgo</h2>
+            <div class="detalle-nav" id="detalle-nav">
+              <button type="button" id="det-ant" class="btn-icono" aria-label="Hallazgo anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.5 6-6 6 6 6"/></svg>
+              </button>
+              <span id="det-pos" aria-live="polite"></span>
+              <button type="button" id="det-sig" class="btn-icono" aria-label="Hallazgo siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="detalle-cuerpo" id="detalle-cuerpo">
+            <p class="detalle-tipo" id="det-tipo"><i class="punto"></i><span></span></p>
+            <dl class="detalle-datos">
+              <div><dt>Inicio</dt><dd id="det-inicio"></dd></div>
+              <div><dt>Fin</dt><dd id="det-fin"></dd></div>
+              <div><dt>Duración</dt><dd id="det-duracion"></dd></div>
+              <div><dt>Confianza del modelo</dt><dd id="det-confianza"></dd></div>
+              <div><dt>Fragmentos de 1 s</dt><dd id="det-segmentos"></dd></div>
+            </dl>
+
+            <div class="mini-reproductor">
+              <button type="button" id="det-play" class="btn-play btn-play-chico" aria-label="Escuchar este hallazgo">
+                <svg class="icono-play"><use href="#i-play"/></svg>
+                <svg class="icono-pausa" hidden><use href="#i-pausa"/></svg>
+              </button>
+              <span class="tiempo" id="det-tiempo">0:00 / 0:00</span>
+              <label class="volumen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4Z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>
+                </svg>
+                <span class="visualmente-oculto">Volumen</span>
+                <input type="range" id="volumen" min="0" max="1" step="0.01" value="1">
+              </label>
+            </div>
+
+            <h3 class="detalle-sub">Qué indica</h3>
+            <p class="detalle-texto" id="det-descripcion"></p>
+          </div>
+
+          <p class="detalle-vacio" id="detalle-vacio" hidden>
+            No hay hallazgos que detallar. Eso no garantiza que la pista
+            esté limpia: escúchala igual.
+          </p>
+        </aside>
+
+        <!-- RF-04, RF-06, RNF-10 -->
+        <section class="hallazgos" aria-labelledby="hallazgos-titulo">
+          <div class="seccion-cabeza">
+            <h2 id="hallazgos-titulo">Hallazgos</h2>
+            <p class="ayuda" id="orden-ayuda">Ordenados por posición en la pista</p>
+          </div>
+
+          <div class="tabla-envoltura">
+            <table id="tabla">
+              <thead>
+                <tr>
+                  <th data-col="nombre"><button type="button">Tipo de defecto</button></th>
+                  <th data-col="inicio_s" aria-sort="ascending"><button type="button">Inicio</button></th>
+                  <th data-col="fin_s"><button type="button">Fin</button></th>
+                  <th data-col="duracion_s"><button type="button">Duración</button></th>
+                  <th data-col="confianza"><button type="button">Confianza</button></th>
+                  <th><span class="visualmente-oculto">Escuchar</span></th>
+                </tr>
+              </thead>
+              <tbody id="cuerpo-tabla"></tbody>
+            </table>
+          </div>
+
+          <p id="sin-hallazgos" class="vacio" hidden>
+            <strong>No se detectó ninguno de los cuatro defectos.</strong>
+            Eso no garantiza que la pista esté limpia: escúchala igual.
+          </p>
+
+          <!-- RNF-10: la interfaz explica como se lee la confianza -->
+          <details class="nota-confianza">
+            <summary>Cómo leer la confianza</summary>
+            <p>
+              Es el promedio de la probabilidad que el modelo asignó a la clase
+              elegida en cada segundo del hallazgo. Sirve para decidir qué revisar
+              primero, no para decidir si un hallazgo es real. Una confianza
+              <strong>alta</strong> (85 % o más) indica que el modelo no dudó entre
+              clases; una <strong>media</strong> (70 a 85 %) o <strong>baja</strong>
+              (menos de 70 %) suele aparecer cuando el defecto es leve o se parece a
+              otro. Ningún valor reemplaza comprobarlo de oído.
+            </p>
+          </details>
+        </section>
+      </div>
+
+      <p class="pie-sesion" id="pie-sesion"></p>
+    </section>
+
+  </main>
+</div>
+
+<footer class="pie">
+  <p>El material cargado se elimina al cerrar la sesión. No se guarda ningún dato personal.</p>
 </footer>
 
+<!-- Ayuda: lo que hace el sistema y lo que no -->
+<dialog id="dialogo-ayuda" class="dialogo" aria-labelledby="ayuda-titulo">
+  <div class="dialogo-cabeza">
+    <h2 id="ayuda-titulo">Cómo funciona sonar</h2>
+    <button type="button" class="btn-icono" id="ayuda-cerrar" aria-label="Cerrar la ayuda">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+  <ol class="pasos">
+    <li><span>1</span> La pista se divide en fragmentos de un segundo.</li>
+    <li><span>2</span> Cada fragmento se clasifica en una de cinco clases: sin defecto, zumbido, ruido de fondo, distorsión o clic.</li>
+    <li><span>3</span> Los fragmentos contiguos de una misma clase se agrupan en hallazgos con inicio, fin y confianza.</li>
+  </ol>
+  <h3>Qué admite</h3>
+  <p>Archivos WAV sin comprimir, de 1 segundo a 15 minutos y hasta 200 MB. Se analiza una pista a la vez y no hace falta cuenta.</p>
+  <h3>Qué no hace</h3>
+  <p>No corrige el audio ni guarda historial: la pista y su reporte se eliminan al cerrar la sesión. El resultado orienta la revisión; no sustituye tu escucha.</p>
+</dialog>
+
+<audio id="audio" preload="metadata"></audio>
+<script src="senal.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
