@@ -28,6 +28,7 @@ services:
     # sin `ports`: no se expone al exterior (RNF-07)
     environment:
       RUTA_MODELO: /app/modelo/mejor.pt
+      RUTA_COMBINADOR: /app/modelo/combinador.joblib
       RUTA_TEMPORAL: /tmp/analisis
       VIDA_SESION_S: "3600"
       LOTE_INFERENCIA: "32"

@@ -31,7 +31,7 @@ NOMBRE_LEGIBLE = {
     "sin_defecto": "Sin defecto",
     "hum": "Zumbido (hum)",
     "hiss": "Ruido de fondo (hiss)",
-    "distorsion": "Distorsion",
+    "distorsion": "Distorsión",
     "clic": "Clic",
 }
 

@@ -7,12 +7,12 @@ Produce las dos cifras que el documento cita:
      (RMS y pico). Si separase las clases, significaria que el modelo puede
      acertar mirando el volumen en lugar de la firma del defecto, que es lo
      que la normalizacion con factor comun por cancion debe impedir.
-     Valor medido: 0,351.
+     Valor medido sobre el manifiesto v2: 0,391.
 
   B) LINEA BASE ACUSTICA. Regresion logistica sobre SIETE descriptores
      elementales de la forma de onda. Es el piso que el modelo tiene que
      superar para justificar su costo (RNF-02).
-     Valor medido: 0,408.
+     Valor medido sobre el manifiesto v2: 0,463 (sobre el v1 era 0,408).
 
 Que la prueba B funcione no es fuga: significa que los defectos dejan
 firmas simples. Lo que seria fuga es que la prueba A funcionara.

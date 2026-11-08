@@ -1,7 +1,12 @@
+# torch NO va en esta lista, a proposito. El Dockerfile lo instala aparte
+# desde el indice de CPU de PyTorch, porque el servicio hace inferencia en
+# CPU y la rueda por omision arrastra CUDA: unos 2,5 GB de dependencias de
+# nvidia que aqui no se usan nunca. Si se agrega `torch` aqui, pip lo
+# instala con CUDA en el primer paso y la linea de CPU del Dockerfile ya no
+# lo reemplaza, porque el requisito ya quedo satisfecho.
 fastapi>=0.110
 uvicorn[standard]>=0.27
 python-multipart>=0.0.9
-torch>=2.0
 numpy>=1.24
 scipy>=1.10
 soundfile>=0.12

@@ -78,10 +78,37 @@ docker compose up --build
 
 La aplicación queda en <http://localhost:8080>.
 
+## Interfaz de programación
+
+El análisis es **asíncrono**: la carga responde de inmediato y el avance se
+consulta aparte, que es lo que exige RF-07. La validación, en cambio, es
+síncrona, porque RF-02 pide que un archivo inadmisible se rechace al instante.
+
+| Método y ruta | Qué hace |
+|---|---|
+| `GET /api/salud` | Estado del servicio, metadatos del modelo y las cinco clases |
+| `POST /api/analisis` | Recibe el WAV. `202` con el identificador, o `400` si no es admisible |
+| `GET /api/analisis/{id}` | Avance (`estado`, `progreso`, `etapa_texto`) o el reporte ya terminado |
+| `DELETE /api/analisis/{id}` | Cierra la sesión y borra pista y reporte (RF-10) |
+
 ## Pruebas
 
+Hacen falta dos rutas en `PYTHONPATH`: la raíz, donde está `nucleo`, y
+`sistema/servicio`, donde está `app`. El separador es `:` en Linux y macOS
+y `;` en Windows.
+
 ```bash
-PYTHONPATH=".:sistema/servicio" pytest sistema/servicio/tests -q
+# Linux / macOS
+PYTHONPATH=".:sistema/servicio" pytest sistema/servicio/tests/test_componentes.py -q
+# Windows (Git Bash)
+PYTHONPATH=".;sistema/servicio" pytest sistema/servicio/tests/test_componentes.py -q
+```
+
+La prueba de sistema corre contra un servicio ya levantado y toma su
+dirección de la variable `SERVICIO`:
+
+```bash
+SERVICIO="http://127.0.0.1:8080" python sistema/servicio/tests/prueba_sistema.py
 ```
 
 ## Correspondencia con el documento
@@ -93,8 +120,14 @@ PYTHONPATH=".:sistema/servicio" pytest sistema/servicio/tests -q
 | Preprocesador | `nucleo/senal.py` |
 | CNN6 y carga de pesos | `nucleo/modelo.py` |
 | Validador (RF-02) | `app/validador.py` |
+| Segmentación y clases (RF-03) | `nucleo/senal.py`, `app/clasificador.py` |
 | Consolidador (RF-04, RF-06) | `app/consolidador.py` |
+| Línea de tiempo (RF-05) | `web/app.js`, `web/estilos.css` |
+| Seguimiento del avance (RF-07) | `app/main.py`, `web/app.js` |
+| Advertencia permanente (RF-08) | `web/index.html` |
+| Exportación del reporte (RF-09) | `web/app.js` |
 | Borrado al cerrar (RF-10) | `app/almacenamiento.py` |
+| Lectura de la confianza (RNF-10) | `web/index.html` |
 | Proxy como único punto de entrada (ADR-04, RNF-07) | `nginx/nginx.conf` |
 | Pruebas unitarias (nivel 4 de V&V) | `sistema/servicio/tests/` |
 

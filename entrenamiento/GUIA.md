@@ -1,8 +1,9 @@
 # Guía para entrenar el modelo
 
 Procedimiento para obtener el modelo que producirá las cifras del Capítulo 4.
-El artefacto que viene con el MVP **no sirve para eso**: se entrenó sobre 750
-segmentos de los 57.058 disponibles, para comprobar que la cañería funciona.
+El artefacto que viene con el MVP **no sirve para eso**: se entrenó sobre 3.500
+segmentos (700 por clase) de los 57.058 disponibles, durante 10 épocas en CPU,
+para comprobar que la cañería funciona.
 
 ## Qué hay que lograr
 
@@ -41,7 +42,9 @@ Tarda unos **11 minutos** y escribe, por partición, `rasgos_*.npy` (float16),
 `etiquetas_*.npy` y `meta_*.json`. Este último guarda `clase_simulacion` y
 `n_clics_segmento`, que hacen falta para los desgloses del Capítulo 4.
 
-> La partición de validación ya está hecha: 15.250 segmentos, 197 MB, 88 s.
+> La partición de validación **ya está hecha**: 15.250 segmentos, 197 MB, 88 s.
+> Para no repetirla, pedí solo las que faltan:
+> `--particiones entrenamiento prueba`
 
 **Comprobá que los conteos cuadran con la Tabla 4** antes de seguir. Si no
 cuadran, hay algo mal y entrenar sería perder horas.
@@ -50,8 +53,10 @@ cuadran, hay algo mal y entrenar sería perder horas.
 
 ## Paso 1 · Llevarlo a una GPU
 
-En CPU, una época sobre el conjunto completo son unos 40 minutos; 30 épocas
-serían casi un día. En una GPU de gama media son minutos.
+No es opcional. La corrida de humo midió entre 192 y 388 segundos por época
+sobre 3.500 segmentos. El conjunto de entrenamiento completo tiene 57.058,
+unas 16 veces más, así que en CPU cada época ronda **la hora** y 40 épocas se
+irían a casi dos días. En una GPU de gama media son minutos.
 
 1. Subí a Google Drive la carpeta `rasgos/` (1,45 GB) y los pesos
    `Cnn6_mAP=0.343.pth` (23 MB).
@@ -134,6 +139,23 @@ Si tras esto la clase **clic** sigue siendo la peor, no es necesariamente culpa
 del modelo: ya medimos que la mediana de las discontinuidades del clic
 reductivo es indistinguible de los transitorios propios de la música. Reportalo
 desglosado por `clase_simulacion` antes de concluir nada.
+
+### Qué tan difícil es la tarea, medido
+
+Antes de culpar al entrenamiento conviene tener presente lo que ya sabemos del
+conjunto, porque acota lo que se puede esperar:
+
+- La Figura 5 del documento muestra que, a las severidades del conjunto, **solo
+  el ruido de fondo se distingue a simple vista** en el log-mel. El zumbido, la
+  saturación y el clic reductivo quedan enterrados bajo música densa.
+- El clic reductivo produce discontinuidades cuya mediana es ×1,01 frente a los
+  transitorios propios de la música.
+- El tamaño de muestra efectivo son **80 canciones**, no 57.058 segmentos.
+
+Nada de esto significa que 0,90 sea inalcanzable, pero sí que si el resultado
+se queda corto la explicación probablemente esté en el conjunto y no en los
+hiperparámetros. Decirlo con estas mediciones es un resultado del trabajo, no
+una excusa.
 
 ---
 

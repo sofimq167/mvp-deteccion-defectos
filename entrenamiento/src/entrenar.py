@@ -25,7 +25,7 @@ from sklearn.metrics import balanced_accuracy_score
 from torch.utils.data import DataLoader
 
 from nucleo import config as cfg
-from nucleo.modelo import Cnn6, cargar_preentrenado
+from nucleo.modelo import cargar_preentrenado, crear
 from src.datos import ConjuntoPrecalculado, ConjuntoSegmentos
 
 
@@ -34,6 +34,43 @@ def fijar_semilla(s: int) -> None:
     np.random.seed(s)
     torch.manual_seed(s)
     torch.cuda.manual_seed_all(s)
+
+
+def enmascarar(x: torch.Tensor, max_t: int, max_f: int,
+               n_t: int = 2, n_f: int = 2) -> torch.Tensor:
+    """SpecAugment: borra franjas de tiempo y de frecuencia del log-mel.
+
+    Obliga a la red a no depender de una banda concreta ni de un instante
+    concreto. Es el aumento con el que se entrenaron las PANN originales.
+
+    El relleno es la media de cada espectro, no cero: el log-mel esta en
+    decibelios, donde el cero es un valor ALTO, asi que rellenar con cero
+    insertaria energia en vez de quitarla.
+    """
+    relleno = x.mean(dim=(1, 2), keepdim=True)
+    lote, tramas, mel = x.shape
+    for eje, cuantas, ancho_max, largo in ((1, n_t, max_t, tramas),
+                                           (2, n_f, max_f, mel)):
+        for _ in range(cuantas):
+            w = torch.randint(0, ancho_max + 1, (lote,), device=x.device)
+            tope = (largo - w).clamp(min=1).float()
+            ini = (torch.rand(lote, device=x.device) * tope).long()
+            pos = torch.arange(largo, device=x.device)[None, :]
+            m = (pos >= ini[:, None]) & (pos < (ini + w)[:, None])
+            m = m[:, :, None] if eje == 1 else m[:, None, :]
+            x = torch.where(m, relleno.expand_as(x), x)
+    return x
+
+
+def mezclar(x: torch.Tensor, y: torch.Tensor, alfa: float):
+    """Mixup: combina pares de ejemplos y sus etiquetas.
+
+    Crea ejemplos intermedios entre clases, que es justo donde este
+    conjunto se confunde: entre limpio, zumbido y saturacion.
+    """
+    lam = float(np.random.beta(alfa, alfa))
+    idx = torch.randperm(x.size(0), device=x.device)
+    return lam * x + (1.0 - lam) * x[idx], y, y[idx], lam
 
 
 def evaluar(modelo, cargador, dispositivo):
@@ -69,6 +106,14 @@ def main() -> None:
     ap.add_argument("--limite-por-clase", type=int, default=None,
                     help="submuestrea cada clase; util para una prueba rapida")
     ap.add_argument("--semilla", type=int, default=cfg.SEMILLA)
+    ap.add_argument("--arquitectura", default="cnn6", choices=("cnn6", "cnn10", "cnn14"),
+                    help="respaldo preentrenado; cnn14 usa el mismo log-mel")
+    ap.add_argument("--mixup", type=float, default=0.0,
+                    help="alfa de la Beta para mixup; 0 lo desactiva (0,2 a 0,4)")
+    ap.add_argument("--mascara-tiempo", type=int, default=0,
+                    help="ancho maximo de las franjas de tiempo borradas (SpecAugment)")
+    ap.add_argument("--mascara-mel", type=int, default=0,
+                    help="ancho maximo de las bandas mel borradas (SpecAugment)")
     args = ap.parse_args()
 
     fijar_semilla(args.semilla)
@@ -94,7 +139,7 @@ def main() -> None:
     c_entren = DataLoader(entren, shuffle=True, drop_last=True, **comun)
     c_valid = DataLoader(valid, shuffle=False, **comun)
 
-    modelo = Cnn6(cfg.N_CLASES).to(dispositivo)
+    modelo = crear(args.arquitectura, cfg.N_CLASES).to(dispositivo)
     resumen_pesos = None
     if args.pesos and args.pesos.is_file():
         resumen_pesos = cargar_preentrenado(modelo, str(args.pesos))
@@ -122,9 +167,12 @@ def main() -> None:
     plan = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=args.epocas)
 
     registro = {
+        "arquitectura": args.arquitectura,
         "semilla": args.semilla, "epocas": args.epocas, "lote": args.lote,
         "tasa_cabeza": args.tasa, "tasa_cuerpo": tasa_cuerpo,
         "paciencia": args.paciencia, "manifiesto": args.manifiesto,
+        "mixup": args.mixup, "mascara_tiempo": args.mascara_tiempo,
+        "mascara_mel": args.mascara_mel,
         "origen": "rasgos precalculados" if args.rasgos else "audio",
         "limite_por_clase": args.limite_por_clase,
         "n_entrenamiento": len(entren), "n_validacion": len(valid),
@@ -139,7 +187,16 @@ def main() -> None:
         for x, y in c_entren:
             x, y = x.to(dispositivo), y.to(dispositivo)
             optim.zero_grad()
-            perdida = criterio(modelo(x), y)
+            if args.mascara_tiempo or args.mascara_mel:
+                x = enmascarar(x, args.mascara_tiempo, args.mascara_mel)
+            if args.mixup > 0:
+                # La perdida se interpola en vez de pasar etiquetas blandas,
+                # para conservar los pesos por clase del criterio.
+                x, ya, yb, lam = mezclar(x, y, args.mixup)
+                salida = modelo(x)
+                perdida = lam * criterio(salida, ya) + (1 - lam) * criterio(salida, yb)
+            else:
+                perdida = criterio(modelo(x), y)
             perdida.backward()
             optim.step()
             perdida_total += perdida.item() * len(y)
@@ -156,13 +213,15 @@ def main() -> None:
 
         torch.save({"modelo": modelo.state_dict(), "epoca": epoca,
                     "exactitud_balanceada_validacion": float(eb),
-                    "clases": list(cfg.CLASES)},
+                    "clases": list(cfg.CLASES),
+                    "arquitectura": args.arquitectura},
                    args.salida / "ultimo.pt")
         if eb > mejor:
             mejor, sin_mejora = eb, 0
             torch.save({"modelo": modelo.state_dict(), "epoca": epoca,
                         "exactitud_balanceada_validacion": float(eb),
-                        "clases": list(cfg.CLASES)},
+                        "clases": list(cfg.CLASES),
+                    "arquitectura": args.arquitectura},
                        args.salida / "mejor.pt")
         else:
             sin_mejora += 1

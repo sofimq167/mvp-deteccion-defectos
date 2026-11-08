@@ -19,6 +19,7 @@ No es una prueba unitaria: requiere el servicio levantado.
 from __future__ import annotations
 
 import io
+import os
 import json
 import sys
 import time
@@ -28,7 +29,7 @@ import wave
 
 import numpy as np
 
-BASE = "http://127.0.0.1:8765"
+BASE = os.environ.get("SERVICIO", "http://127.0.0.1:8765")
 FRONTERA = "----limite-prueba-sistema"
 
 
@@ -81,6 +82,25 @@ def esperar_servicio(intentos: int = 40):
     raise SystemExit("El servicio no respondió en %d s." % intentos)
 
 
+def esperar_reporte(ident: str, intentos: int = 300):
+    """Consulta el estado hasta que el reporte esta listo.
+
+    Devuelve (reporte, estados_intermedios). Los estados intermedios son
+    la evidencia de RF-07: que el avance se pueda seguir mientras corre.
+    """
+    estados = []
+    for _ in range(intentos):
+        cod, d = pedir("/api/analisis/%s" % ident)
+        if cod != 200:
+            return None, estados
+        if d.get("estado") == "en_proceso":
+            estados.append(d)
+            time.sleep(0.1)
+            continue
+        return d, estados
+    return None, estados
+
+
 def main() -> int:
     fallos = []
 
@@ -95,8 +115,21 @@ def main() -> int:
     comprobar(len(salud["clases"]) == 5, "declara las cinco clases")
 
     print("\n2. Análisis de una pista válida")
-    cod, rep = pedir("/api/analisis", "POST", ("prueba.wav", pista_con_hum()))
-    comprobar(cod == 200, "responde 200")
+    cod, acuse = pedir("/api/analisis", "POST", ("prueba.wav", pista_con_hum()))
+    comprobar(cod == 202, "acepta la pista con 202 y no bloquea la petición")
+    comprobar(bool(acuse.get("id")), "devuelve un identificador de sesión")
+
+    # RF-07: el estado debe poder consultarse mientras el analisis corre
+    rep, estados = esperar_reporte(acuse["id"])
+    comprobar(rep is not None, "el análisis termina y entrega el reporte")
+    comprobar(all(0.0 <= e.get("progreso", -1) <= 1.0 for e in estados),
+              "cada consulta de estado informa un avance entre 0 y 1 (RF-07)")
+    comprobar(all(e.get("etapa_texto") for e in estados),
+              "cada consulta nombra la etapa en curso (RF-07)")
+    if estados:
+        print("       etapas observadas: %s"
+              % ", ".join(dict.fromkeys(e.get("etapa", "?") for e in estados)))
+
     comprobar(abs(rep["duracion_s"] - 6.0) < 0.1, "informa la duración correcta")
     comprobar(rep["n_segmentos"] == 6, "produce un segmento por segundo")
     comprobar(bool(rep.get("advertencia")), "incluye la advertencia (RF-08)")
